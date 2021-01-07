@@ -111,7 +111,7 @@ const getAllProperties = function(options, limit = 10) {
 
   if (options.owner_id) {
    queryParams.push(`${options.owner_id}`)
-   queryString += `AND owner_id = $${queryParams.length} `;
+   queryString += `WHERE owner_id = $${queryParams.length} `;
   }
 
   if (options.minimum_price_per_night) {
@@ -157,10 +157,24 @@ exports.getAllProperties = getAllProperties;
  * @param {{}} property An object containing all of the property details.
  * @return {Promise<{}>} A promise to the property.
  */
+// const addProperty = function(property) {
+//   const propertyId = Object.keys(properties).length + 1;
+//   property.id = propertyId;
+//   properties[propertyId] = property;
+//   return Promise.resolve(property);
+// }
+
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  const queryParams = [];
+  for (let value in property) {
+    queryParams.push(property[value]);
+  }
+  console.log(queryParams);
+  console.log('Numberof params: ', queryParams.length);
+  return pool.query(`
+  INSERT INTO properties (title, description, number_of_bedrooms, number_of_bathrooms, parking_spaces, cost_per_night, thumbnail_photo_url, cover_photo_url, street, country, province, city, post_code, owner_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    RETURNING *;`, [...queryParams])
+    .then(res => res.rows);
 }
 exports.addProperty = addProperty;
